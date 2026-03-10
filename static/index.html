@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Inventory Profit Optimizer (FIPO)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=11">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-icon"></div>
+                <h1>FIPO <span>Dashboard</span></h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button id="settings-btn" class="settings-btn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                </button>
+                <div class="time-container">
+                    <span id="last-updated">Updating...</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="overview-grid">
+                <!-- Data Cards -->
+                <a href="https://finance.yahoo.com/quote/BZ=F/" target="_blank" class="card glass clickable-card"
+                    style="text-decoration: none; color: inherit;">
+                    <div class="card-icon brent-icon"></div>
+                    <h2>Brent Crude (Spot)</h2>
+                    <div class="value-container">
+                        <span class="currency">$</span><span id="brent-val" class="value">--.--</span><span
+                            class="unit">/bbl</span>
+                    </div>
+                    <div id="brent-rat" class="card-rationale"></div>
+                </a>
+
+                <a href="https://finance.yahoo.com/quote/INR=X/" target="_blank" class="card glass clickable-card"
+                    style="text-decoration: none; color: inherit;">
+                    <div class="card-icon inr-icon"></div>
+                    <h2>USD to INR</h2>
+                    <div class="value-container">
+                        <span class="currency">₹</span><span id="inr-val" class="value">--.--</span>
+                    </div>
+                    <div id="inr-rat" class="card-rationale"></div>
+                </a>
+
+                <a href="https://www.5paisa.com/commodity-trading/mcx-crudeoil-price" target="_blank"
+                    class="card glass clickable-card" style="text-decoration: none; color: inherit;">
+                    <div class="card-icon mcx-icon"></div>
+                    <h2>MCX Crude Oil</h2>
+                    <div class="value-container">
+                        <span id="mcx-val" class="value" style="color: var(--text-primary);">--.--</span><span
+                            class="unit">%</span>
+                    </div>
+                    <div id="mcx-rat" class="card-rationale"></div>
+                </a>
+
+                <div class="card glass highlight-card" id="prob-card">
+                    <h2>Hike Probability</h2>
+                    <div class="prob-circle">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845
+                                  a 15.9155 15.9155 0 0 1 0 31.831
+                                  a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle" id="prob-circle-path" stroke-dasharray="0, 100" d="M18 2.0845
+                                  a 15.9155 15.9155 0 0 1 0 31.831
+                                  a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.35" class="percentage" id="prob-text">0%</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card glass action-card">
+                    <h2>Action Recommendation</h2>
+                    <div id="recommendation-badge" class="badge">ANALYZING...</div>
+                    <p class="rationale" id="rationale-text">Waiting for data...</p>
+                </div>
+            </section>
+
+            <section class="calculator-section">
+                <div class="card glass profit-card" id="profit-calculator-card" style="transition: all 0.3s ease;">
+                    <div class="card-header" id="profit-card-header"
+                        style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin-bottom: 0;">Profit Calculator</h3>
+                        <span id="expand-icon"
+                            style="font-size: 0.8rem; color: var(--text-sec); transition: color 0.3s ease;">▼ Click to
+                            expand</span>
+                    </div>
+
+                    <!-- Summary View -->
+                    <div id="calculator-summary" class="calculator-summary" style="cursor: pointer; margin-top: 1rem;">
+                        <div class="profit-value-wrapper" style="margin-bottom: 0.2rem;">
+                            <span class="currency">₹</span><span id="summary-gain-val" class="gain-value">0</span>
+                        </div>
+                        <p class="subtext" style="margin-bottom: 1rem;">Estimated Extra Gain from predicted hike.</p>
+
+                        <div class="profit-breakdown"
+                            style="padding: 1rem; border: 1px solid hsla(150, 100%, 30%, 0.2); background: hsla(220, 20%, 8%, 0.4); margin-bottom: 0.5rem; border-radius: 8px;">
+                            <div class="breakdown-row">
+                                <span>Dealer Commission:</span>
+                                <span class="breakdown-val">₹3.2/L</span>
+                            </div>
+                            <div class="breakdown-row" style="margin-bottom: 0.5rem;">
+                                <span>Predicted Price Hike:</span>
+                                <span class="breakdown-val">₹<span id="summary-hike-val">0.0</span>/L</span>
+                            </div>
+                            <div class="breakdown-row highlight-row total-row"
+                                style="margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px solid hsla(150, 100%, 30%, 0.3);">
+                                <span>Total Per-Liter Opportunity:</span>
+                                <span class="breakdown-val"
+                                    style="color: var(--accent-green); font-size: 1.2rem;">₹<span
+                                        id="summary-combined-val">3.2</span>/L</span>
+                            </div>
+                        </div>
+
+                        <p class="subtext" style="text-align: center; margin-top: 0.5rem; font-style: italic;">Based on
+                            20,000L Capacity Tank</p>
+                    </div>
+
+                    <!-- Expanded View -->
+                    <div id="calculator-expanded" class="calculator-expanded"
+                        style="display: none; margin-top: 1.5rem;">
+                        <div class="calculator-inputs">
+                            <div class="input-group">
+                                <label for="tank-cap-input">Current Fuel in Tank (Liters)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="tank-cap-input" value="0" min="0" max="20000"
+                                        placeholder="0" />
+                                    <span class="input-unit">L</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="predicted-hike-input">Predicted Price Hike (₹/L)</label>
+                                <div class="input-wrapper">
+                                    <span class="input-currency">₹</span>
+                                    <input type="number" id="predicted-hike-input" value="0.0" step="0.1" />
+                                    <span class="input-unit">/L</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tank-full-msg" class="tank-full-msg"
+                            style="display: none; color: var(--accent-yellow); font-size: 0.85rem; margin-bottom: 1rem; padding: 0.5rem; background: hsla(40, 100%, 50%, 0.1); border-radius: 6px; border: 1px dashed var(--accent-yellow);">
+                            Tank is full. No additional fuel can be purchased before the price hike.
+                        </div>
+
+                        <div class="primary-metric">
+                            <p class="metric-label">Extra Gain from Hike</p>
+                            <div class="profit-value-wrapper highlight-extra-gain">
+                                <span class="currency">₹</span><span id="extra-gain-val" class="gain-value">0</span>
+                            </div>
+                        </div>
+
+                        <div class="profit-breakdown">
+                            <div class="breakdown-row">
+                                <span>Standard Dealer Commission (₹3.2/L):</span>
+                                <span class="breakdown-val">₹<span id="dealer-commission-total">0</span></span>
+                            </div>
+                            <div class="breakdown-row highlight-row total-row">
+                                <span>Total Estimated Value (Commission + Hike):</span>
+                                <span class="breakdown-val">₹<span id="total-gain-val">0</span></span>
+                            </div>
+                        </div>
+                        <p class="subtext" style="text-align: center; margin-top: 1rem; font-style: italic;">Based on
+                            20,000L Capacity Tank</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="news-section">
+                <div class="card glass news-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin-bottom: 0;">Market News & Catalysts</h3>
+                        <div id="news-rat" class="card-rationale"></div>
+                    </div>
+                    <ul id="news-list" class="news-list">
+                        <li class="news-item">Loading latest headlines...</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal Overlay -->
+        <div id="settings-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h2>Advanced Settings</h2>
+                    <button id="close-settings-btn" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-group">
+                        <label for="setting-base-petrol">Base Retail Petrol (₹)</label>
+                        <input type="number" id="setting-base-petrol" step="0.01" />
+                    </div>
+                    <div class="settings-group">
+                        <label for="setting-critical-brent">Critical Brent Level ($)</label>
+                        <input type="number" id="setting-critical-brent" step="0.1" />
+                    </div>
+                    <div class="settings-group">
+                        <label for="setting-critical-inr">Critical INR Level (₹)</label>
+                        <input type="number" id="setting-critical-inr" step="0.1" />
+                    </div>
+                    <div class="settings-group">
+                        <label for="setting-tank-capacity">Tank Capacity (Liters)</label>
+                        <input type="number" id="setting-tank-capacity" step="1000" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-settings-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="save-settings-btn" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="loading-bar">
+                <div class="progress" id="refresh-progress"></div>
+            </div>
+            <p>Auto-refreshing every 60 seconds</p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js?v=9"></script>
+</body>
+
+</html>
