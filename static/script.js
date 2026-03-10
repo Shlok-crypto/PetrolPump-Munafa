@@ -7,8 +7,12 @@ let fipoConfig = {
     base_retail_petrol: 94.69,
     critical_brent_level: 115.00,
     critical_inr_level: 92.00,
-    tank_capacity_liters: 20000
+    tank_capacity_liters: 20000,
+    whatsapp_enabled: false,
+    whatsapp_number: ''
 };
+
+let previousRecommendation = null;
 
 function loadConfig() {
     const saved = localStorage.getItem('fipoConfig');
@@ -129,7 +133,11 @@ function updateDashboard(data) {
     probCircle.style.stroke = strokeColor;
     probText.style.fill = strokeColor;
 
-    // Recommendation Badge
+    // Recommendation Badge    // Rationale Colors
+    const ratElement = document.getElementById('rationale-text');
+    ratElement.className = 'rationale'; // Reset
+
+    // Recommendation Badge & WA Trigger logic
     const badge = document.getElementById('recommendation-badge');
     badge.className = 'badge'; // Reset
     if (data.recommendation === 'MAX_INDENT') {
@@ -142,7 +150,42 @@ function updateDashboard(data) {
         badge.textContent = 'NORMAL';
         badge.classList.add('normal');
     }
+
+    // Trigger WhatsApp Notification on transition to MAX_INDENT
+    if (data.recommendation === 'MAX_INDENT' && previousRecommendation !== 'MAX_INDENT') {
+        if (fipoConfig.whatsapp_enabled && fipoConfig.whatsapp_number) {
+            triggerWhatsAppNotification(data);
+        }
+    }
+    previousRecommendation = data.recommendation;
 }
+
+async function triggerWhatsAppNotification(data) {
+    try {
+        const payload = {
+            number: fipoConfig.whatsapp_number,
+            indian_basket: data.indian_basket,
+            usd_inr: data.usd_inr,
+            mcx_percent: data.mcx_percent,
+            hike_probability: data.hike_probability,
+            predicted_hike: data.predicted_hike_per_liter,
+            dealer_commission: data.dealer_commission_per_liter,
+            extra_gain: data.extra_gain_per_liter,
+            tank_capacity: fipoConfig.tank_capacity_liters
+        };
+        console.log("Triggering WA Notification to backend...", payload);
+        fetch('/api/notify/whatsapp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.error("Failed to trigger WA notification", e);
+    }
+}
+
 
 function recalculateProfit() {
     const tankLiters = parseFloat(document.getElementById('tank-cap-input').value) || 0;
@@ -281,6 +324,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     const settingsModal = document.getElementById('settings-modal');
 
+    // WhatsApp Modal Logic
+    const waToggleBtn = document.getElementById('wa-toggle-btn');
+    const waModal = document.getElementById('wa-modal');
+    const closeWaBtn = document.getElementById('close-wa-btn');
+    const saveWaBtn = document.getElementById('wa-save-btn');
+    const clearWaBtn = document.getElementById('wa-clear-btn');
+    const waEnableToggle = document.getElementById('wa-enable-toggle');
+    const waPhoneInput = document.getElementById('wa-phone-input');
+
+    const updateWaBtnVisuals = () => {
+        if (!waToggleBtn) return;
+        if (fipoConfig.whatsapp_enabled && fipoConfig.whatsapp_number) {
+            waToggleBtn.classList.add('active');
+            waToggleBtn.querySelector('span').textContent = 'WhatsApp On';
+        } else {
+            waToggleBtn.classList.remove('active');
+            waToggleBtn.querySelector('span').textContent = 'WhatsApp Off';
+        }
+    };
+    updateWaBtnVisuals();
+
+    const openWaSettings = () => {
+        if (waEnableToggle) waEnableToggle.checked = fipoConfig.whatsapp_enabled;
+        if (waPhoneInput) waPhoneInput.value = fipoConfig.whatsapp_number || '';
+        if (waModal) waModal.style.display = 'flex';
+    };
+
+    const closeWaSettings = () => {
+        if (waModal) waModal.style.display = 'none';
+    };
+
+    if (waToggleBtn) waToggleBtn.addEventListener('click', openWaSettings);
+    if (closeWaBtn) closeWaBtn.addEventListener('click', closeWaSettings);
+
+    if (clearWaBtn) {
+        clearWaBtn.addEventListener('click', () => {
+            if (waPhoneInput) waPhoneInput.value = '';
+        });
+    }
+
+    if (saveWaBtn) {
+        saveWaBtn.addEventListener('click', () => {
+            fipoConfig.whatsapp_enabled = waEnableToggle.checked;
+            fipoConfig.whatsapp_number = waPhoneInput.value.trim();
+            saveConfig();
+            updateWaBtnVisuals();
+            closeWaSettings();
+        });
+    }
+
     // Inputs
     const basePetrolIn = document.getElementById('setting-base-petrol');
     const critBrentIn = document.getElementById('setting-critical-brent');
@@ -324,6 +417,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('click', (e) => {
         if (e.target === settingsModal) {
             closeSettings();
+        }
+        if (e.target === waModal) {
+            closeWaSettings();
         }
     });
 
