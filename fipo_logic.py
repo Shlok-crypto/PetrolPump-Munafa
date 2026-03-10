@@ -14,17 +14,23 @@ DEFAULT_CRITICAL_INR_LEVEL = 92.00
 DEFAULT_TANK_CAPACITY_LITERS = 20000
 
 def fetch_market_data():
-    """Fetches Brent Crude and USD/INR from yfinance."""
-    data = {"brent_crude": 0.0, "usd_inr": 0.0}
+    """Fetches Brent Crude and USD/INR from yfinance and calculates Indian Basket."""
+    data = {"brent_crude": 0.0, "usd_inr": 0.0, "indian_basket": 0.0}
     try:
         # Brent Crude (Spot): BZ=F
         brent = yf.Ticker("BZ=F")
         brent_hist = brent.history(period="1d")
         if not brent_hist.empty:
-            data["brent_crude"] = round(brent_hist["Close"].iloc[-1], 2)
+            brent_val = round(brent_hist["Close"].iloc[-1], 2)
+            data["brent_crude"] = brent_val
+            # Indian Basket: 65% Oman/Dubai (Sour) + 35% Brent (Sweet)
+            # Proxying Dubai as Brent - $2.50 typical spread
+            dubai_proxy = brent_val - 2.50
+            data["indian_basket"] = round((dubai_proxy * 0.65) + (brent_val * 0.35), 2)
     except Exception as e:
         print(f"Error fetching Brent: {e}")
-        data["brent_crude"] = 116.50  # Fallback based on user example
+        data["brent_crude"] = 116.50  # Fallback
+        data["indian_basket"] = 114.87 # Fallback
 
     try:
         # USD/INR: INR=X
@@ -89,8 +95,8 @@ def calculate_news_score():
     try:
         raw_query = (
     '('
-    '"India Ministry of Petroleum" OR @PetroleumMin OR "Indian Oil" OR IOC OR "Petrol price" OR "Diesel price" OR "Crude oil price"'
-    ') AND (hike OR cut OR change OR increase OR decrease OR revision) when:7d'
+    '"Petroleum Ministry" OR "OMC margin" OR "under-recovery" OR "excise duty cut" OR "IOCL" OR "BPCL" OR "HPCL" OR "fuel price hike India"'
+    ') when:7d'
 )
         query = urllib.parse.quote(raw_query)
         url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
@@ -101,10 +107,10 @@ def calculate_news_score():
         score = 0
         headlines = []
 
-        # Define weighted keyword categories
-        price_change_keywords = ['hike', 'cut', 'change', 'increase', 'decrease', 'revision', 'price', 'fuel', 'petrol', 'diesel', 'crude']
-        supply_disruption_keywords = ['lpg', 'constraint', 'disruption', 'shortage', 'supply']
-        geopolitical_keywords = ['election result', 'middle east', 'war', 'conflict', 'sanction', 'strike']
+        # Define highly specific Indian market keywords
+        omc_loss_keywords = ['under-recovery', 'loss', 'margin hit', 'margin drop', 'debt']
+        excise_cut_keywords = ['excise cut', 'tax cut', 'relief', 'duty cut']
+        price_change_keywords = ['hike', 'increase', 'revision', 'upward']
 
         print(f"--- GOOGLE NEWS RSS DATA ---")
         for item in root.findall('./channel/item')[:6]: # Get up to 6 news items for 3-column grid
@@ -142,17 +148,17 @@ def calculate_news_score():
 
             # Scoring logic
             item_score = 0
-            # Price-related keywords — higher weight
+            # Price-change keywords
             if any(kw in title for kw in price_change_keywords):
                 item_score += 4
 
-            # Supply disruption keywords — medium weight
-            if any(kw in title for kw in supply_disruption_keywords):
-                item_score += 3
+            # OMC Under-recovery keywords — high penalty/alert weight
+            if any(kw in title for kw in omc_loss_keywords):
+                item_score += 6
 
-            # Geopolitical risk keywords — lower weight
-            if any(kw in title for kw in geopolitical_keywords):
-                item_score += 2
+            # Excise cut / tax relief keywords — very bullish indicator (actually suppresses hike probability, but for our metrics it's max importance)
+            if any(kw in title for kw in excise_cut_keywords):
+                item_score -= 8  # Reduces hike probability significantly
 
             # Decay score by recency (more recent, higher weight)
             recency_weight = max(0.5, (168 - hours_ago) / 168)  # between 0.5 and 1
@@ -177,16 +183,16 @@ def calculate_fipo(
     tank_capacity_liters: int = DEFAULT_TANK_CAPACITY_LITERS
 ):
     market_data = fetch_market_data()
-    brent = market_data.get("brent_crude", 0)
+    indian_basket = market_data.get("indian_basket", 0)
     usd_inr = market_data.get("usd_inr", 0)
     
     # Calculate Scores
-    # Brent (40%) - Dynamic relative to critical_brent_level
-    brent_score = 0
-    if brent >= (critical_brent_level - 5): # e.g. >= 110 if critical is 115
-        brent_score = 40
-    elif brent >= (critical_brent_level - 25): # e.g. >= 90 if critical is 115
-        brent_score = 25
+    # Indian Basket (40%) - Dynamic relative to critical_brent_level (acting as critical basket level)
+    basket_score = 0
+    if indian_basket >= (critical_brent_level - 5): # e.g. >= 110 if critical is 115
+        basket_score = 40
+    elif indian_basket >= (critical_brent_level - 25): # e.g. >= 90 if critical is 115
+        basket_score = 25
         
     # Currency (30%) - Dynamic relative to critical_inr_level
     inr_score = 0
@@ -198,8 +204,8 @@ def calculate_fipo(
     mcx_score, mcx_val = calculate_mcx_score()
     news_score, news_headlines = calculate_news_score()
     
-    # Total Probability
-    hike_prob = int(brent_score + inr_score + mcx_score + news_score)
+    # Total Probability (Clamp to 0-100)
+    hike_prob = max(0, min(100, int(basket_score + inr_score + mcx_score + news_score)))
     print(f"Hike Probability: {hike_prob}")
     
     # Recommendation Logic
@@ -217,13 +223,13 @@ def calculate_fipo(
     tz_ist = pytz.timezone('Asia/Kolkata')
     timestamp = datetime.datetime.now(tz_ist).isoformat()
     
-    brent_rat = "Critical Brent" if brent_score == 40 else ("High Crude" if brent_score > 0 else "")
+    basket_rat = "Critical Crude Basket" if basket_score == 40 else ("High Crude Basket" if basket_score > 0 else "")
     inr_rat = "Severe Rupee Drop" if inr_score == 30 else ("Weak Rupee" if inr_score > 0 else "")
     mcx_rat = "Strong MCX Jump" if mcx_score == 20 else ("Positive MCX Trend" if mcx_score > 0 else "")
-    news_rat = "News Catalysts" if news_score > 5 else ""
+    news_rat = "OMC Margin Pressure" if news_score > 5 else ("Excise Cut Hints" if news_score < 0 else "")
     
     rationale_parts = []
-    if brent_rat: rationale_parts.append(brent_rat)
+    if basket_rat: rationale_parts.append(basket_rat)
     if inr_rat: rationale_parts.append(inr_rat)
     if mcx_rat: rationale_parts.append(mcx_rat)
     if news_rat: rationale_parts.append(news_rat)
@@ -232,7 +238,7 @@ def calculate_fipo(
     
     return {
         "timestamp": timestamp,
-        "brent_crude": brent,
+        "indian_basket": indian_basket,
         "usd_inr": usd_inr,
         "hike_probability": hike_prob,
         "recommendation": recommendation,
@@ -242,11 +248,11 @@ def calculate_fipo(
         "estimated_gain": estimated_gain,
         "tank_capacity": tank_capacity_liters,
         "rationale": rationale,
-        "rationale_brent": brent_rat,
+        "rationale_brent": basket_rat,
         "rationale_inr": inr_rat,
         "rationale_mcx": mcx_rat,
         "rationale_news": news_rat,
         "mcx_percent": mcx_val,
         "news_headlines": news_headlines
     }
-# calculate_fipo()
+calculate_fipo()

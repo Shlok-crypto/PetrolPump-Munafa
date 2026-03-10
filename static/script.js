@@ -43,7 +43,7 @@ async function fetchFipoData() {
 
 function updateDashboard(data) {
     // Basic values
-    animateValue('brent-val', parseFloat(document.getElementById('brent-val').textContent) || 0, data.brent_crude, 1000, 2);
+    animateValue('brent-val', parseFloat(document.getElementById('brent-val').textContent) || 0, data.indian_basket, 1000, 2);
     animateValue('inr-val', parseFloat(document.getElementById('inr-val').textContent) || 0, data.usd_inr, 1000, 2);
     // Profit Calculator setup
     const hikeInput = document.getElementById('predicted-hike-input');
