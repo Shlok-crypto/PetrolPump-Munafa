@@ -1,6 +1,6 @@
 # Fuel Inventory Profit Optimizer (FIPO) ⛽📈
 
-![FIPO Dashboard](static/favicon.ico) *A modern, algorithmic dashboard designed to help petrol pump dealers proactively manage inventory and maximize profits ahead of retail fuel price hikes.*
+*A modern, algorithmic dashboard designed to help petrol pump dealers proactively manage inventory and maximize profits ahead of retail fuel price hikes.*
 
 FIPO (Fuel Inventory Profit Optimizer) is a real-time web application tailored for petroleum dealers (starting with Uttar Pradesh constants). It continuously monitors global economic factors—specifically **Brent Crude**, the **USD/INR exchange rate**, **MCX Crude futures**, and **live market news**—to compute a statistical probability of an impending government-mandated retail fuel price hike. 
 
@@ -20,6 +20,10 @@ By leveraging this probabilistic foresight, pump owners can make informed decisi
 *   **Integrated Profit Calculator:** A dynamic tool that lets dealers input their current underground tank fuel level and their own predicted hike amount to calculate exactly how much extra profit they stand to make by indenting early.
 *   **Customizable Thresholds:** Features an Advanced Settings modal allowing owners to dynamically adjust the underlying mathematical triggers (Critical Brent price, Critical Rupee drop, and custom Tank Capacities) without touching the code.
 *   **Premium Glassmorphism UI:** A sleek, dark-themed dashboard built with pure CSS grids, vibrant accents, and smooth data-loading animations.
+
+<img width="1075" height="1723" alt="PetrolPump Munafa" src="https://github.com/user-attachments/assets/3ddc3fbc-84fd-460f-9dc2-c3700d385848" />
+
+<img width="1115" height="877" alt="image" src="https://github.com/user-attachments/assets/c123ff0c-321d-4036-a620-3b75ae56c52c" />
 
 ---
 
@@ -50,8 +54,8 @@ By leveraging this probabilistic foresight, pump owners can make informed decisi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/Oil_Price_Predictor_UP.git
-   cd Oil_Price_Predictor_UP
+   git clone https://github.com/your-username/PetrolPump-Munafa.git
+   cd PetrolPump-Munafa
    ```
 
 2. **Install dependencies**
