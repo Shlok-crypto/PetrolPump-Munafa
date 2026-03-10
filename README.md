@@ -21,6 +21,10 @@ By leveraging this probabilistic foresight, pump owners can make informed decisi
 *   **Customizable Thresholds:** Features an Advanced Settings modal allowing owners to dynamically adjust the underlying mathematical triggers (Critical Brent price, Critical Rupee drop, and custom Tank Capacities) without touching the code.
 *   **Premium Glassmorphism UI:** A sleek, dark-themed dashboard built with pure CSS grids, vibrant accents, and smooth data-loading animations.
 
+<img width="1075" height="1723" alt="PetrolPump Munafa" src="https://github.com/user-attachments/assets/3ddc3fbc-84fd-460f-9dc2-c3700d385848" />
+
+<img width="1115" height="877" alt="image" src="https://github.com/user-attachments/assets/c123ff0c-321d-4036-a620-3b75ae56c52c" />
+
 ---
 
 ## 🛠️ Tech Stack
