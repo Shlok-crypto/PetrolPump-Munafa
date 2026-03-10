@@ -1,6 +1,6 @@
 # Fuel Inventory Profit Optimizer (FIPO) ⛽📈
 
-![FIPO Dashboard](static/favicon.ico) *A modern, algorithmic dashboard designed to help fuel dealers proactively manage inventory and maximize profits ahead of retail fuel price hikes.*
+![FIPO Dashboard](static/favicon.ico) *A modern, algorithmic dashboard designed to help petrol pump dealers proactively manage inventory and maximize profits ahead of retail fuel price hikes.*
 
 FIPO (Fuel Inventory Profit Optimizer) is a real-time web application tailored for petroleum dealers (starting with Uttar Pradesh constants). It continuously monitors global economic factors—specifically **Brent Crude**, the **USD/INR exchange rate**, **MCX Crude futures**, and **live market news**—to compute a statistical probability of an impending government-mandated retail fuel price hike. 
 
@@ -71,7 +71,7 @@ By leveraging this probabilistic foresight, pump owners can make informed decisi
 4. **Access the Dashboard**
    Open your preferred modern web browser and navigate to:
    ```text
-   http://127.0.0.1:8000
+   http://localhost:8000/
    ```
    *The dashboard data auto-refreshes every 60 seconds.*
 
